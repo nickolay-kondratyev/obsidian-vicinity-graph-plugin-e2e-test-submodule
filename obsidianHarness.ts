@@ -318,7 +318,7 @@ export class ObsidianHarness {
 		}, VIEW_TYPE_VICINITY_GRAPH);
 	}
 
-	/** Runs the plugin's "Open vicinity graph" command and waits for the RF canvas to mount. */
+	/** Runs the plugin's "Open in right sidebar" command and waits for the RF canvas to mount. */
 	async openGraphView(): Promise<void> {
 		await this.executeCommand(OPEN_GRAPH_COMMAND_ID);
 		// The mounted view shows the empty state until a note-bearing file becomes
