@@ -64,9 +64,9 @@ export interface PluginGlobalsSnapshot {
 
 export const PLUGIN_ID = "vicinity-graph";
 /** Command id = `<pluginId>:<commandId>` (Obsidian namespacing). */
-export const OPEN_GRAPH_COMMAND_ID = `${PLUGIN_ID}:open-vicinity-graph`;
+export const OPEN_GRAPH_COMMAND_ID = `${PLUGIN_ID}:open-right-sidebar`;
 /** Places the graph in a main-area pane BELOW the active note (see GraphViewOpener). */
-export const OPEN_GRAPH_BELOW_COMMAND_ID = `${PLUGIN_ID}:open-vicinity-graph-below`;
+export const OPEN_GRAPH_BELOW_COMMAND_ID = `${PLUGIN_ID}:open-below`;
 /** Mirrors `GraphViewPlacement`, plus the "neither region" case a spec must be able to see. */
 export type ObservedGraphPlacement = "right-sidebar" | "main-area" | "other";
 /**
