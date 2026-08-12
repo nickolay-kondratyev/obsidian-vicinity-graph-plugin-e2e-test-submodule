@@ -43,6 +43,7 @@ const OUT_DIR = ".out/settings-typed-input";
 const MAX_PX_CONTROL = sizingNumberControlName("maxPx");
 const MIN_PX_CONTROL = sizingNumberControlName("minPx");
 const EXCLUSION_PATTERNS_CONTROL = soleRowControlName("exclusion-patterns");
+const ID_REF_FIELDS_CONTROL = soleRowControlName("id-ref-fields");
 
 /**
  * The GIVEN pair every sizing test seeds: a valid, unambiguous minimum with plenty of
@@ -93,6 +94,13 @@ const ERROR_TEXT_CSS_VARIABLE = "--text-error";
  */
 const FEEDBACK_WHITE_SPACE = "pre-line";
 
+/**
+ * A comma-and-space id-reference list, typed as-is to prove the tab stores the RAW
+ * string verbatim — the list parse (`parseIdRefFields`) lives downstream, so a write
+ * that trimmed or split here would be wrong.
+ */
+const TYPED_ID_REF_FIELDS = "deps, links";
+
 let harness: ObsidianHarness;
 let page: Page;
 let settingsTab: SettingsTabPage;
@@ -135,6 +143,15 @@ async function givenSizingPairSeeded(): Promise<void> {
  */
 async function givenNoWriteStillPending(): Promise<void> {
 	await writeWindow.drain();
+}
+
+/** GIVEN the settings tab open on the id-reference-fields row at its shipped-empty default. */
+async function givenIdRefFieldsReady(): Promise<void> {
+	await settingsTab.open();
+	await givenNoWriteStillPending();
+	await harness.saveFrontmatterLinks({ idRefFields: "" });
+	await settingsTab.redisplay();
+	await expect(settingsTab.control(ID_REF_FIELDS_CONTROL)).toHaveValue("");
 }
 
 /** GIVEN the exclusion patterns row open and EDITABLE (it is inert while exclusion is off). */
@@ -275,6 +292,19 @@ test("settings tab: WHEN an invalid regex line is typed THEN it is still stored,
 		(globals) => globals.exclusion.patterns,
 		parseExclusionPatterns(TYPED_PATTERNS),
 		"a typed pattern list must persist verbatim — invalid lines are surfaced, not dropped",
+	);
+});
+
+test("settings tab: WHEN an id-reference field list is typed THEN the raw string persists once the settle window drains", async () => {
+	await givenIdRefFieldsReady();
+
+	await settingsTab.typeInto(ID_REF_FIELDS_CONTROL, TYPED_ID_REF_FIELDS);
+
+	// Stored VERBATIM — spaces and commas and all: the tab must not pre-parse the list.
+	await writeWindow.expectPersisted(
+		(globals) => globals.frontmatterLinks.idRefFields,
+		TYPED_ID_REF_FIELDS,
+		"a typed id-reference field list must persist verbatim when the debounce window drains",
 	);
 });
 

@@ -24,6 +24,7 @@ describe("settings-tab baseline", () => {
 		expect(SECTION_RESET_NAMES).toEqual([
 			"Restore depth defaults",
 			"Restore edges defaults",
+			"Restore frontmatter links defaults",
 			"Restore node sizing defaults",
 			"Restore node contents defaults",
 			"Restore force layout defaults",
