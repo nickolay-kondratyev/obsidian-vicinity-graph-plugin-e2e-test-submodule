@@ -256,6 +256,22 @@ export class ObsidianHarness {
 		});
 	}
 
+	/**
+	 * Creates a vault note at `vaultPath` with `content` through `vault.create` — the
+	 * same API a "New note" invokes — so the metadata cache indexes it and fires the
+	 * `changed` events the plugin listens to. Fixture seeding for a spec (dev-vault-copy
+	 * mode only): it writes into the throwaway vault copy, never the source.
+	 */
+	async createNote(vaultPath: string, content: string): Promise<void> {
+		await this.page.evaluate(
+			async ({ targetPath, data }) => {
+				const app = (window as unknown as { app: E2eObsidianApp }).app;
+				await app.vault.create(targetPath, data);
+			},
+			{ targetPath: vaultPath, data: content },
+		);
+	}
+
 	/** Opens a vault file in a MAIN-AREA leaf (mirrors ObsidianNoteNavigator's getLeaf(false)). */
 	async openFile(vaultPath: string): Promise<void> {
 		await this.page.evaluate(async (targetPath) => {
