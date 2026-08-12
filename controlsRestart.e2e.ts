@@ -168,8 +168,11 @@ test("depth, pin, node cap and sizing all survive an Obsidian restart", async ()
 	await clickPin(PIN_TARGET);
 	await expect(noteNode(PIN_TARGET)).toHaveAttribute("data-tier", "pinned-central");
 
-	// §1 Global depth: raise "Links in" 1 → 2, pulling the rt_in2 hop.
+	// §1 Global depth: raise "Links in" 0 → 2, pulling the rt_in2 hop. Incoming
+	// depth ships at 0 (backlinks are opt-in), so reaching the depth-2 rt_in2 chain
+	// takes TWO bumps, not one.
 	await ensureOpen(toolbar());
+	await bumpLinksInDepth();
 	await bumpLinksInDepth();
 	await expect(linksInDepthValue()).toHaveText("2");
 	await expect(noteNode(IN2)).toHaveCount(1);

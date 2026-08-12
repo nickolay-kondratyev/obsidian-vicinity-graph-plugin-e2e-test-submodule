@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
+import { EngineDefaults } from "../src/engine";
 import { ObsidianHarness } from "./obsidianHarness";
 
 /**
@@ -63,8 +64,16 @@ let page: Page;
 test.beforeAll(async () => {
 	harness = await ObsidianHarness.launch({ extraFixtures: SCENARIO_FIXTURES });
 	page = harness.page;
-	await harness.openFile(HUB);
 	await harness.openGraphView();
+	// The shipped incoming-depth defaults are 0 (backlinks are opt-in — the values
+	// are pinned in src/engine/settingsProductDefaults.test.ts). This spec's subject
+	// is the pin lifecycle and the per-role OUTGOING dials; it incidentally relies on
+	// INCOMING reach to keep sc_hub visible as pinned sc_x's depth-1 backlink after
+	// the hub is unpinned (see the lifecycle test). Restore incoming reach to 1 here
+	// so that incidental dependency holds — the OUT dials it actually tests stay at
+	// their shipped default of 1.
+	await harness.saveGlobalDepths({ ...EngineDefaults.depthSettings(), linkDepthIn: 1, pinnedLinkDepthIn: 1 });
+	await harness.openFile(HUB);
 });
 
 test.afterAll(async () => {

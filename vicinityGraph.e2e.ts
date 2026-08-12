@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { asFolderPath } from "../src/engine";
+import { asFolderPath, EngineDefaults } from "../src/engine";
 import { buttonChromeVsDeclared } from "./buttonChrome";
 import { hiddenOverlayText, linkCountBadgeText, orphanBreakdownTitle, plusNText } from "../src/view/badgeText";
 import { attachmentGroupLabel } from "../src/view/attachmentIcons";
@@ -20,7 +20,8 @@ import type { E2eObsidianApp } from "./obsidianInternals";
 test.describe.configure({ mode: "serial" });
 
 // Fixture-derived expectations (see scripts/setup-dev-vault.sh + harness crowd/ fixtures).
-// Depths default to 1 outgoing / 1 incoming, edge visibility "walked-from-center".
+// Outgoing depth 1; Links-in raised to 1 in beforeAll (shipped default is 0 — see there),
+// edge visibility "walked-from-center".
 const ALPHA_PATH = "projects/alpha.md";
 const ALPHA_FM_TITLE = "Project Alpha (fm title)";
 /** alpha-focused vicinity: alpha (MAIN) + beta (out+in) + note1 (out). */
@@ -57,6 +58,15 @@ test.beforeAll(async () => {
 	harness = await ObsidianHarness.launch();
 	page = harness.page;
 	await harness.openGraphView();
+	// The shipped incoming-depth default is 0 (backlinks are opt-in — the value is
+	// pinned in src/engine/settingsProductDefaults.test.ts and reset-verified in
+	// settingsResetReview.e2e.ts). This suite exercises RENDERING mechanics — folder
+	// groups, truncation badges, orphan overlays, thumbnails, cross-boundary edges —
+	// whose fixtures pull themselves into the central note's vicinity via INCOMING
+	// links (see scripts/setup-dev-vault.sh). Those mechanics are independent of the
+	// depth value, so raise Links-in to 1 here to keep the populated vicinity the
+	// counts below assume; the default itself is covered by the unit + reset suites.
+	await harness.saveGlobalDepths({ ...EngineDefaults.depthSettings(), linkDepthIn: 1 });
 	await harness.openFile(ALPHA_PATH);
 	await expect(noteNode(ALPHA_PATH)).toHaveAttribute("data-tier", "main");
 });
