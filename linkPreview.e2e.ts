@@ -78,7 +78,7 @@ test.beforeAll(async () => {
 	page = harness.page;
 	await harness.openGraphView();
 	await harness.openFile(ALPHA_PATH);
-	await expect(page.locator(`.vicinity-graph-node[data-path="${ALPHA_PATH}"]`)).toHaveAttribute("data-tier", "main");
+	await expect(page.locator(`.vicinity-graph-node[data-vicinity-path="${ALPHA_PATH}"]`)).toHaveAttribute("data-tier", "main");
 });
 
 test.afterAll(async () => {
@@ -175,7 +175,7 @@ test("clicking the close button dismisses the drawer", async () => {
 
 test("an embed occurrence shows its raw wikilink text and never the embedded note's body", async () => {
 	await harness.openFile(EMBED_SOURCE_PATH);
-	await expect(page.locator(`.vicinity-graph-node[data-path="${EMBED_SOURCE_PATH}"]`)).toHaveAttribute(
+	await expect(page.locator(`.vicinity-graph-node[data-vicinity-path="${EMBED_SOURCE_PATH}"]`)).toHaveAttribute(
 		"data-tier",
 		"main",
 	);
@@ -189,7 +189,7 @@ test("an embed occurrence shows its raw wikilink text and never the embedded not
 
 test("a markdown-style image embed in an occurrence shows its raw text and never an expanded image", async () => {
 	await harness.openFile(MD_EMBED_SOURCE_PATH);
-	await expect(page.locator(`.vicinity-graph-node[data-path="${MD_EMBED_SOURCE_PATH}"]`)).toHaveAttribute(
+	await expect(page.locator(`.vicinity-graph-node[data-vicinity-path="${MD_EMBED_SOURCE_PATH}"]`)).toHaveAttribute(
 		"data-tier",
 		"main",
 	);

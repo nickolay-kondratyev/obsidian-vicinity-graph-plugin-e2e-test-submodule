@@ -196,7 +196,7 @@ describe("e2e selector guard matcher", () => {
 	});
 
 	it("WHEN a selector interpolates an attribute value THEN the static class prefix is still extracted", () => {
-		expect(assertedClassesOnLine("page.locator(`.vicinity-graph-node[data-path=\"${path}\"]`)")).toEqual([
+		expect(assertedClassesOnLine("page.locator(`.vicinity-graph-node[data-vicinity-path=\"${path}\"]`)")).toEqual([
 			"vicinity-graph-node",
 		]);
 	});

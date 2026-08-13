@@ -51,7 +51,7 @@ test.describe("per-file store: deleting a doc prunes its records", () => {
 	});
 
 	function noteNode(path: string): Locator {
-		return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+		return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 	}
 
 	test("deleting a doc drops its override AND prunes it as another main's local-pin target", async () => {
@@ -123,7 +123,7 @@ test.describe("per-file store: a conflict-markered record is quarantined on boot
 	});
 
 	function noteNode(path: string): Locator {
-		return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+		return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 	}
 
 	test("the plugin boots, the doc reads as defaults, and the bad file is set aside not deleted", async () => {

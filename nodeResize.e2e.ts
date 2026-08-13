@@ -76,7 +76,7 @@ test.afterAll(async () => {
 });
 
 function noteNode(path: string): Locator {
-	return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+	return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 }
 
 /** React Flow's node wrapper — its inline style width/height are FLOW units (zoom-independent). */

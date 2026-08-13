@@ -69,7 +69,7 @@ test.afterAll(async () => {
 });
 
 function noteNode(path: string): Locator {
-	return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+	return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 }
 
 /** Reveals a node's hover-only LOCAL pin chip (distinct class from the global pin), then clicks it. */

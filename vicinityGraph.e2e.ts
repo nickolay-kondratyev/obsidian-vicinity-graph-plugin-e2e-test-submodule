@@ -66,7 +66,7 @@ test.afterAll(async () => {
 });
 
 function noteNode(path: string) {
-	return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+	return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 }
 
 function folderGroup(folder: string) {

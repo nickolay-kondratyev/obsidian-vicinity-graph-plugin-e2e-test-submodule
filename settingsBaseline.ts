@@ -154,6 +154,7 @@ export interface PanelDisclosure {
 const SUMMARY_ALSO_MATCHES_AN_ANCESTOR: Readonly<Record<SectionResetScope, boolean>> = {
 	"depth-defaults": true,
 	edges: false,
+	"frontmatter-links": false,
 	"node-sizing": false,
 	"node-contents": false,
 	"force-layout": true,
