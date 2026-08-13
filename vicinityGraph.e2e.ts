@@ -20,7 +20,9 @@ import type { E2eObsidianApp } from "./obsidianInternals";
 test.describe.configure({ mode: "serial" });
 
 // Fixture-derived expectations (see scripts/setup-dev-vault.sh + harness crowd/ fixtures).
-// Depths default to 1 outgoing / 1 incoming, edge visibility "walked-from-center".
+// Depths: 1 outgoing (the shipped default) / 1 incoming (raised in beforeAll —
+// backlinks ship OPT-IN at depth 0, an owner decision pinned in
+// src/engine/settingsProductDefaults.test.ts). Edge visibility "walked-from-center".
 const ALPHA_PATH = "projects/alpha.md";
 const ALPHA_FM_TITLE = "Project Alpha (fm title)";
 /** alpha-focused vicinity: alpha (MAIN) + beta (out+in) + note1 (out). */
@@ -59,7 +61,35 @@ test.beforeAll(async () => {
 	await harness.openGraphView();
 	await harness.openFile(ALPHA_PATH);
 	await expect(noteNode(ALPHA_PATH)).toHaveAttribute("data-tier", "main");
+	await raiseLinksInDepthToOne();
 });
+
+/**
+ * Raises the ACTIVE-note "Links in" dial 0 → 1 for the whole suite: backlinks
+ * ship OPT-IN (`linkDepthIn` defaults to 0), and every fixture expectation in
+ * this file was derived with incoming depth 1 (beta→alpha, note1's crowd, the
+ * orphan sweep). Fired through the panel's real stepper handler; the panel is
+ * closed again afterwards so its overlay cannot intercept later node clicks.
+ */
+async function raiseLinksInDepthToOne(): Promise<void> {
+	const toolbar = page.locator(".vicinity-graph-toolbar");
+	await toolbar.evaluate((el) => {
+		(el as HTMLDetailsElement).open = true;
+	});
+	const depthSection = page.locator(".vicinity-graph-depth-controls:not(.vicinity-graph-depth-controls--pinned)");
+	await depthSection
+		.getByRole("button", { name: "Increase links in", exact: true })
+		.evaluate((el) => (el as HTMLButtonElement).click());
+	await expect(
+		depthSection
+			.locator(".vicinity-graph-stepper")
+			.filter({ hasText: "Links in" })
+			.locator(".vicinity-graph-stepper__value"),
+	).toHaveText("1");
+	await toolbar.evaluate((el) => {
+		(el as HTMLDetailsElement).open = false;
+	});
+}
 
 test.afterAll(async () => {
 	await harness?.close();

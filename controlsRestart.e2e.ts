@@ -168,8 +168,12 @@ test("depth, pin, node cap and sizing all survive an Obsidian restart", async ()
 	await clickPin(PIN_TARGET);
 	await expect(noteNode(PIN_TARGET)).toHaveAttribute("data-tier", "pinned-central");
 
-	// §1 Global depth: raise "Links in" 1 → 2, pulling the rt_in2 hop.
+	// §1 Global depth: raise "Links in" 0 → 2 (backlinks ship OPT-IN at depth 0 —
+	// owner decision pinned in src/engine/settingsProductDefaults.test.ts), pulling
+	// the rt_in2 hop. Two taps; the optimistic stepper steps from the shown value,
+	// so a burst is the supported path.
 	await ensureOpen(toolbar());
+	await bumpLinksInDepth();
 	await bumpLinksInDepth();
 	await expect(linksInDepthValue()).toHaveText("2");
 	await expect(noteNode(IN2)).toHaveCount(1);
