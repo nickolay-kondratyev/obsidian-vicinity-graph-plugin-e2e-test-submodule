@@ -51,7 +51,7 @@ test.beforeAll(async () => {
 	settingsTab = new SettingsTabPage(page);
 	await harness.openGraphView();
 	await harness.openFile(ALPHA_PATH);
-	await expect(page.locator(`.vicinity-graph-node[data-path="${ALPHA_PATH}"]`)).toHaveAttribute("data-tier", "main");
+	await expect(page.locator(`.vicinity-graph-node[data-vicinity-path="${ALPHA_PATH}"]`)).toHaveAttribute("data-tier", "main");
 });
 
 test.afterAll(async () => {

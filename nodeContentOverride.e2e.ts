@@ -55,7 +55,7 @@ test.afterAll(async () => {
 });
 
 function noteNode(path: string): Locator {
-	return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+	return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 }
 
 /** Opens the gear menu for a node: hover to reveal the chip, then click it. */

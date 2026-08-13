@@ -83,7 +83,7 @@ test.afterAll(async () => {
 });
 
 function noteNode(path: string): Locator {
-	return page.locator(`.vicinity-graph-node[data-path="${path}"]`);
+	return page.locator(`.vicinity-graph-node[data-vicinity-path="${path}"]`);
 }
 
 /** The panel's ACTIVE-note depth block (`:not` — the pinned block shares the base class). */
