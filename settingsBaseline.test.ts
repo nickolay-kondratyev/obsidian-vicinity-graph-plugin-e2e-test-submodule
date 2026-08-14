@@ -27,6 +27,7 @@ describe("settings-tab baseline", () => {
 			"Restore frontmatter links defaults",
 			"Restore node sizing defaults",
 			"Restore node contents defaults",
+			"Restore grouping defaults",
 			"Restore force layout defaults",
 			"Restore node exclusion defaults",
 			"Restore performance defaults",
