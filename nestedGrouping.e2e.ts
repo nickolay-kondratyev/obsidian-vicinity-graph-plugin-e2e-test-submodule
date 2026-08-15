@@ -270,6 +270,101 @@ test("raising Edge depth into groups makes a crossing edge terminate at the inne
 	await expect(flowEdge("db/x1.md->folder-group:db/sql")).toHaveCount(1);
 });
 
+// --- (7) a pierced edge avoids the inner squares and the title band ----------
+
+/**
+ * How many strictly-interior title/note points count as a violation. Zero: the
+ * hierarchical router must keep EVERY sampled point of the pierced polyline off the
+ * title band and off the sibling square. Sub-pixel transform rounding is absorbed by
+ * the small pads inside {@link readPiercedEdgeAvoidance}, not by tolerating a hit.
+ */
+const MAX_INTERIOR_HITS = 0;
+
+/** How densely the rendered pierced polyline is sampled when checking for interior hits. */
+const PIERCE_SAMPLE_STEPS = 64;
+
+interface PiercedEdgeAvoidance {
+	readonly sampled: number;
+	readonly titleBandHits: number;
+	readonly siblingSquareHits: number;
+}
+
+/**
+ * Samples the RENDERED pierced polyline (screen coordinates via `getPointAtLength` +
+ * `getScreenCTM`, the same transform the facing-attachment reader uses) and counts how
+ * many of its points land strictly inside the group's TITLE band (its label) or inside
+ * a SIBLING note square that shares the pierced box. Both counts must be zero — the
+ * end-to-end proof of decision D3 in a real Obsidian, complementing the deterministic
+ * wasm-level geometry unit tests in `hierarchicalEdgeRouting.test.ts`.
+ */
+function readPiercedEdgeAvoidance(
+	edgeId: string,
+	piercedFolder: string,
+	siblingNotePath: string,
+): Promise<PiercedEdgeAvoidance> {
+	return page.evaluate(
+		({ edgeId, piercedFolder, siblingNotePath, steps }) => {
+			const edge = document.querySelector(`.vicinity-graph-flow .react-flow__edge[data-id="${edgeId}"]`);
+			const path = edge?.querySelector<SVGPathElement>(".react-flow__edge-path") ?? null;
+			const ctm = path?.getScreenCTM() ?? null;
+			if (path === null || ctm === null) {
+				throw new Error(`pierced edge not rendered: id=[${edgeId}]`);
+			}
+			const total = path.getTotalLength();
+			const points: { x: number; y: number }[] = [];
+			for (let i = 0; i <= steps; i += 1) {
+				const raw = path.getPointAtLength((total * i) / steps);
+				points.push({ x: ctm.a * raw.x + ctm.c * raw.y + ctm.e, y: ctm.b * raw.x + ctm.d * raw.y + ctm.f });
+			}
+			const rectOf = (selector: string): DOMRect => {
+				const element = document.querySelector(selector);
+				if (element === null) {
+					throw new Error(`element not rendered: selector=[${selector}]`);
+				}
+				return element.getBoundingClientRect();
+			};
+			const titleRect = rectOf(`.vicinity-graph-group[data-folder="${piercedFolder}"] .vicinity-graph-group__label`);
+			const siblingRect = rectOf(`.react-flow__node[data-id="${siblingNotePath}"]`);
+			const strictlyInside = (p: { x: number; y: number }, r: DOMRect, pad: number): boolean =>
+				p.x > r.left + pad && p.x < r.right - pad && p.y > r.top + pad && p.y < r.bottom - pad;
+			return {
+				sampled: points.length,
+				titleBandHits: points.filter((p) => strictlyInside(p, titleRect, 0)).length,
+				siblingSquareHits: points.filter((p) => strictlyInside(p, siblingRect, 1)).length,
+			};
+		},
+		{ edgeId, piercedFolder, siblingNotePath, steps: PIERCE_SAMPLE_STEPS },
+	);
+}
+
+test("a pierced edge routes around the group's title band and its sibling squares", async () => {
+	// Allowance 1: x1 → s1 pierces the db/sql box (see test (6)). The hierarchical router
+	// must reach the inner note s1 WITHOUT crossing the box's title band or its sibling
+	// square s2 — both drawn inside db/sql.
+	await setEdgeDepthIntoGroups(1);
+	const piercedEdge = flowEdge("db/x1.md->db/sql/s1.md");
+	await expect(piercedEdge).toHaveCount(1);
+	// Settle on a coherent snapshot: poll only for the polyline being drawn, then assert
+	// the avoidance property ONCE (polling the property would hide a real violation behind
+	// an unreadable timeout).
+	await expect
+		.poll(async () => (await readPiercedEdgeAvoidance("db/x1.md->db/sql/s1.md", "db/sql", "db/sql/s2.md")).sampled, {
+			timeout: 20_000,
+		})
+		.toBeGreaterThan(0);
+	const avoidance = await readPiercedEdgeAvoidance("db/x1.md->db/sql/s1.md", "db/sql", "db/sql/s2.md");
+	expect(avoidance.titleBandHits, "pierced polyline crossed the group's title band").toBeLessThanOrEqual(
+		MAX_INTERIOR_HITS,
+	);
+	expect(avoidance.siblingSquareHits, "pierced polyline crossed a sibling note square").toBeLessThanOrEqual(
+		MAX_INTERIOR_HITS,
+	);
+
+	// Restore the shipped default so later tests read the collapsed behaviour.
+	await setEdgeDepthIntoGroups(0);
+	await expect(flowEdge("db/x1.md->folder-group:db/sql")).toHaveCount(1);
+});
+
 // --- (4) +N badge on the nearest RENDERED ancestor group --------------------
 
 // KEEP LAST: mutates the global node cap and does not restore it, so any test
