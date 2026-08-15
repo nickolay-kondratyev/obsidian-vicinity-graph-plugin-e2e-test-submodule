@@ -76,6 +76,7 @@ const CAP_HIDING_LONE = FULL_NODE_COUNT - 2; // 6 non-central survivors, lone1 d
 const COLLAPSED_CHAIN_FOLDER = "wiki/lang/en";
 const COLLAPSED_CHAIN_LEAF = "en";
 const GROUP_LABEL_FULL_PATH_NAME = "Full folder path";
+const EDGE_DEPTH_INTO_GROUPS_NAME = "Edge depth into groups";
 
 let harness: ObsidianHarness;
 let page: Page;
@@ -215,6 +216,58 @@ test("turning ON Full folder path relabels the collapsed chain with its whole pa
 	// Restore the default so later tests read the shipped label behaviour.
 	await setGroupLabelFullPath(false);
 	await expect(label).toHaveText(COLLAPSED_CHAIN_LEAF);
+});
+
+// --- (6) "Edge depth into groups" lets an edge pierce into a group box -------
+
+/**
+ * Drives the global "Edge depth into groups" SLIDER through the in-graph controls
+ * PANEL — the real user gesture, reaching the same write pipeline the settings tab
+ * uses, which fans out a rebuild on its own. Reveals the toolbar and every nested
+ * `<details>` first (only the depth section opens by default), exactly like
+ * {@link setGroupLabelFullPath}. A range input is set through the native value
+ * setter and an `input` event so React's `onChange` fires (a bare `.fill()` does not
+ * drive a range thumb). A slider write is NOT debounced, so settling is the rebuilt
+ * graph itself — asserted web-first by the caller, never a sleep.
+ */
+async function setEdgeDepthIntoGroups(value: number): Promise<void> {
+	const toolbar = page.locator(".vicinity-graph-toolbar");
+	await toolbar.evaluate((root) => {
+		(root as HTMLDetailsElement).open = true;
+		root.querySelectorAll("details").forEach((section) => {
+			(section as HTMLDetailsElement).open = true;
+		});
+	});
+	const slider = page.getByRole("slider", { name: EDGE_DEPTH_INTO_GROUPS_NAME, exact: true });
+	await slider.evaluate((el, next) => {
+		const input = el as HTMLInputElement;
+		const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+		setter?.call(input, String(next));
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+	}, value);
+	await expect(slider).toHaveValue(String(value));
+	await toolbar.evaluate((root) => {
+		(root as HTMLDetailsElement).open = false;
+	});
+}
+
+test("raising Edge depth into groups makes a crossing edge terminate at the inner NOTE inside the group", async () => {
+	// Default (0): x1 (a db member) → s1 (a db/sql member) collapses onto the db/sql box.
+	await expect(flowEdge("db/x1.md->folder-group:db/sql")).toHaveCount(1);
+	await expect(flowEdge("db/x1.md->db/sql/s1.md")).toHaveCount(0);
+
+	// Allowance 1: the s1 endpoint reaches one group deeper than db/sql's direct-child
+	// projection — i.e. the true note s1 — so the edge now pierces the db/sql box and
+	// ends at the note rendered INSIDE it. RENDER-ONLY: the group boxes are unmoved.
+	await setEdgeDepthIntoGroups(1);
+	await expect(flowEdge("db/x1.md->db/sql/s1.md")).toHaveCount(1);
+	await expect(flowEdge("db/x1.md->folder-group:db/sql")).toHaveCount(0);
+	// The pierced endpoint is a real note drawn inside the group box it now reaches into.
+	await expectRenderedInside(noteNode("db/sql/s1.md"), folderGroup("db/sql"));
+
+	// Restore the shipped default so later tests read the collapsed behaviour.
+	await setEdgeDepthIntoGroups(0);
+	await expect(flowEdge("db/x1.md->folder-group:db/sql")).toHaveCount(1);
 });
 
 // --- (4) +N badge on the nearest RENDERED ancestor group --------------------
